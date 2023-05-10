@@ -1,16 +1,56 @@
-### Hi there 👋
+package main
 
-<!--
-**Oana-Florentina/Oana-Florentina** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+import (
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"time"
 
-Here are some ideas to get you started:
+	"github.com/mmcdole/gofeed"
+)
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+func makeReadme(filename string) error {
+	fp := gofeed.NewParser()
+	feed, err := fp.ParseURL("https://victoria.dev/index.xml")
+	if err != nil {
+		log.Fatalf("error getting feed: %v", err)
+	}
+	// Get the freshest item
+	blogItem := feed.Items[0]
+
+	wc, err := fp.ParseURL("https://victoria.dev/wc/index.xml")
+	if err != nil {
+		log.Fatalf("error getting feed: %v", err)
+	}
+	// Add this much magic
+	wcItem := wc.Items[0]
+
+	date := time.Now().Format("2 Jan 2006")
+
+	// Whisk together static and dynamic content until stiff peaks form
+	hello := "### Hello! I’m Victoria Drake.\n\nI love to build open source projects and learn and teach in public through the " + wcItem.Description + " words I’ve written on [victoria.dev](https://victoria.dev)."
+	blog := "You might like my latest blog post: **[" + blogItem.Title + "](" + blogItem.Link + ")**. You can subscribe to my [**blog RSS**](https://victoria.dev/index.xml) or by email at [**victoria.dev**](https://victoria.dev)."
+	updated := "<sub>Last updated by magic on " + date + ".</sub>"
+	data := fmt.Sprintf("%s\n\n%s\n\n%s\n", hello, blog, updated)
+
+	// Prepare file with a light coating of os
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Bake at n bytes per second until golden brown
+	_, err = io.WriteString(file, data)
+	if err != nil {
+		return err
+	}
+	return file.Sync()
+}
+
+func main() {
+
+	makeReadme("../README.md")
+
+}
